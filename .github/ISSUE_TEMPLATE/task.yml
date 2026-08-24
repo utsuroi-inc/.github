@@ -1,0 +1,53 @@
+name: 改善・作業の提案
+description: 新しい機能、改善、ドキュメント更新などを提案します
+title: "[Task] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        目的と完了条件が分かれば、技術的な書き方でなくても大丈夫です。
+        顧客情報、個人情報、パスワード、APIキーは書かないでください。
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 何を良くしたいですか？
+      description: 困っていることや実現したい状態を書いてください。
+      placeholder: 例：初めて使う人が、説明なしでもPDF保存まで進めるようにしたい
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: なぜ必要ですか？
+      description: 背景や対象となる利用者を書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 何ができたら完了ですか？
+      description: 確認できる形で、完了条件を書いてください。
+      placeholder: |
+        - 設定画面からPDFを選べる
+        - 保存したPDFを開ける
+        - READMEに使い方が追記されている
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 種類
+      options:
+        - 機能追加・改善
+        - 不具合修正
+        - ドキュメント
+        - 運用・設定
+        - セキュリティ
+        - その他
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 補足
+      description: 参考資料や注意点があれば書いてください。

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: セキュリティ上の問題
+    url: https://github.com/utsuroi-inc/.github/blob/main/SECURITY.md
+    about: 公開Issueを作らず、こちらの手順で連絡してください
