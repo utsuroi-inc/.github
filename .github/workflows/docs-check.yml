@@ -1,0 +1,48 @@
+name: Governance CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  docs-check:
+    name: docs-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check required documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            README.md
+            GOVERNANCE.md
+            CONTRIBUTING.md
+            SECURITY.md
+            .github/ISSUE_TEMPLATE/task.yml
+            .github/ISSUE_TEMPLATE/bug.yml
+            .github/ISSUE_TEMPLATE/config.yml
+            .github/pull_request_template.md
+          )
+
+          for file in "${required_files[@]}"; do
+            test -s "$file"
+          done
+
+      - name: Validate YAML syntax
+        run: |
+          ruby -e 'require "yaml"; ARGV.each { |file| YAML.load_file(file) }' \
+            .github/ISSUE_TEMPLATE/task.yml \
+            .github/ISSUE_TEMPLATE/bug.yml \
+            .github/ISSUE_TEMPLATE/config.yml \
+            .github/workflows/docs-check.yml
