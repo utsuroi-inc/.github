@@ -9,6 +9,7 @@
 1. [GitHub運用方針](GOVERNANCE.md) — なぜこの運用をするのか、全体像
 2. [変更の進め方](CONTRIBUTING.md) — 実際の作業手順
 3. [セキュリティ上の問題を見つけたとき](SECURITY.md) — 公開Issueへ書いてはいけない内容
+4. [AI開発支援ツール向けルール](AGENTS.md) — CodexやClaude Codeが作業前に読む注意事項
 
 ## 一言でいうと
 
@@ -25,5 +26,20 @@ flowchart LR
 - `main` は正式版として扱い、直接変更しない
 - 変更はPull Requestにして、目的と確認結果を残す
 - 社内情報・顧客情報・秘密情報は公開リポジトリへ置かない
+
+## AIにルールを伝える仕組み
+
+```mermaid
+flowchart LR
+    HUMAN[人がルールを更新] --> AGENTS[AGENTS.md]
+    AGENTS --> CODEX[Codex]
+    AGENTS --> CLAUDE[CLAUDE.md経由で<br/>Claude Code]
+    CODEX --> PR[同じ手順でPR]
+    CLAUDE --> PR
+```
+
+Organization共通の考え方はこのリポジトリ、製品固有のコマンドや禁止事項は
+各リポジトリ直下の `AGENTS.md` に置きます。`CLAUDE.md` は `AGENTS.md` を読み込む
+短い入口にし、同じルールを二重管理しません。
 
 Organizationの公開プロフィールは [`profile/README.md`](profile/README.md) で管理しています。

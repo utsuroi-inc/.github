@@ -25,6 +25,8 @@ jobs:
         run: |
           set -euo pipefail
           required_files=(
+            AGENTS.md
+            CLAUDE.md
             README.md
             GOVERNANCE.md
             CONTRIBUTING.md
