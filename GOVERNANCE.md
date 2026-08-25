@@ -107,3 +107,24 @@ flowchart LR
 - **半年に1回**：使っていないリポジトリをArchiveするか判断する
 
 ルールを増やすことが目的ではありません。迷い・事故・属人化を減らすために、必要な範囲だけ更新します。
+
+## 9. AI開発支援ツールが読むルール
+
+CodexやClaude Codeにも、人と同じ運用ルールを作業開始時に渡します。
+
+```mermaid
+flowchart TB
+    COMMON[会社共通<br/>運用方針] --> REPO[各リポジトリの<br/>AGENTS.md]
+    REPO --> CODEX[Codexが自動参照]
+    REPO --> ENTRY[CLAUDE.md]
+    ENTRY --> CLAUDE[Claude Codeが参照]
+```
+
+- Organization共通の考え方は `utsuroi-inc/.github` で管理する
+- 実行コマンド、確認方法、製品固有の禁止事項は各リポジトリ直下の `AGENTS.md` に置く
+- `CLAUDE.md` は同じ場所の `AGENTS.md` を読み込む入口にし、内容を二重管理しない
+- 下位のプロジェクト固有ルールは、上位の共通ルールに追加して扱う
+- ルール変更も通常のコードと同様にPull Requestと確認を通す
+
+ルールファイルは安全装置ですが、AIが必ず正しく判断する保証ではありません。
+公開、削除、費用、権限、データ取扱いに関する重要な変更は、最終的に人が確認します。
