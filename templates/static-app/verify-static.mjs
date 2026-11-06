@@ -5,6 +5,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, extname, sep } from 'node:path';
 import { Script } from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const textExtensions = new Set(['.html', '.htm', '.js', '.mjs', '.css']);
 const ignoredFolders = new Set(['.git', '.github', 'node_modules', 'vendor', 'dist', 'coverage']);
@@ -37,8 +38,13 @@ export function verifyStatic(rootDir) {
   }
 
   function compileJavaScript(code, origin) {
-    try { new Script(code, { filename: origin }); }
-    catch (error) { fail(`${origin}: JavaScript構文エラー: ${error.message}`); }
+    if (origin.endsWith('.mjs')) {
+      const checked = spawnSync(process.execPath, ['--check', resolve(root, origin)], { encoding: 'utf8' });
+      if (checked.status !== 0) fail(`${origin}: JavaScript構文エラー: ${checked.stderr.trim()}`);
+    } else {
+      try { new Script(code, { filename: origin }); }
+      catch (error) { fail(`${origin}: JavaScript構文エラー: ${error.message}`); }
+    }
     const forbidden = [
       [/\beval\s*\(/g, 'eval()'],
       [/\bnew\s+Function\s*\(/g, 'new Function()'],
@@ -95,6 +101,9 @@ export function verifyStatic(rootDir) {
       } else if (item.isFile() && textExtensions.has(extname(item.name))) {
         const path = resolve(dir, item.name);
         const relative = path.slice(root.length + 1);
+        // CI checker/test fixtures are tooling, not served application code.
+        // Their own syntax and tests run as separate CI steps.
+        if (relative === 'scripts/verify-static.mjs' || relative === 'scripts/verify-static.test.mjs') continue;
         const content = readFileSync(path, 'utf8');
         if (/\.html?$/.test(item.name)) checkHtml(content, relative);
         else if (/\.(?:js|mjs)$/.test(item.name)) compileJavaScript(content, relative);

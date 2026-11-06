@@ -54,3 +54,21 @@ test('missing manifest icon fails closed', () => {
 test('path traversal reference fails closed', () => withFixture('<img src="../../private.txt">', (root) => {
   assert.match(verifyStatic(root).errors.join(' '), /ルート外への参照/);
 }));
+
+test('valid first-party JavaScript modules are parsed', () => {
+  const root = fixture();
+  try {
+    mkdirSync(join(root, 'app'));
+    writeFileSync(join(root, 'app/main.mjs'), 'export const ready = true;');
+    assert.equal(verifyStatic(root).ok, true);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('security checker test fixtures are not scanned as runtime app code', () => {
+  const root = fixture();
+  try {
+    mkdirSync(join(root, 'scripts'));
+    writeFileSync(join(root, 'scripts/verify-static.test.mjs'), 'const fixture = "https://bad.example.invalid/script.js";');
+    assert.equal(verifyStatic(root).ok, true);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
