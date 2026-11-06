@@ -13,10 +13,10 @@
 1. 公開リスクの小さいテストアプリを選ぶ。顧客の実データを使わない。
 2. `templates/APP_REGISTER.csv`を社内限定の保存先で複製し、アプリIDと責任者を登録。
 3. アプリの`AGENTS.md`に`templates/AGENTS_SECURITY.md`を統合。
-4. Node系なら`templates/workflows/secure-node-ci.yml`をアプリリポジトリの`.github/workflows/secure-ci.yml`として調整（各npm scriptsは必須）。Node系以外は技術に合う検査へ置き換える。
+4. Node系なら`templates/workflows/secure-node-ci.yml`、HTML + plain JS系なら`templates/workflows/secure-static-ci.yml`と`templates/static-app/`をアプリリポジトリへ配置する。ビルド手段やSAST、依存スキャンはアプリに合わせて追加する。
 5. `secure-gate`が緑になることだけでなく、秘密情報の疑似検出、失敗するテスト、脆弱な依存関係で赤になることを確認。
 6. RulesetでPRと`secure-gate`成功を必須にし、**失敗したPRが本当にマージできない**ことを検証。
-7. Cloudflareの本番デプロイ方法と全URLを確認。保護されていないプレビュー経路を閉じる。
+7. **検査用PRのpushより先に**Cloudflareの本番・プレビューの設定と全URLを確認する。プレビューが公開状態なら、そのままセキュリティ検査用PRをpushしない。
 8. 保護されたテスト環境で未認証・許可ユーザー・拒否ユーザーをテスト。
 9. 本番公開承認記録を作り、対象コミットSHAのみを公開。実公開後にスモークテスト。
 10. テスト結果と戻し方を保存し、初回レビューで方針を確定する。
@@ -58,3 +58,7 @@
 5. 既存アプリの機密データの扱いとバックアップ・ロールバック能力。
 
 **上記を確認し、試験が成功するまでは組織全体の強制設定や既存本番の公開方式を変更しない。**
+
+## 運用の具体的な担当・頻度
+
+毎回の担当・証跡・禁止事項・週次／月次点検は[`OPERATION_PLAYBOOK.md`](OPERATION_PLAYBOOK.md)を参照。個別の公開経路は[`templates/DEPLOYMENT_INVENTORY.md`](templates/DEPLOYMENT_INVENTORY.md)を対象アプリの**非公開領域**へ複製して管理する。

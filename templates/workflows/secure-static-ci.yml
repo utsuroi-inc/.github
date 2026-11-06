@@ -1,0 +1,62 @@
+# TEMPLATE: HTML + plain JSの静的アプリ用。
+# 導入先リポジトリで以下のファイルをコピー：
+#   .github/workflows/secure-ci.yml      <- このファイル
+#   scripts/verify-static.mjs            <- ../static-app/verify-static.mjs
+#   scripts/verify-static.test.mjs       <- ../static-app/verify-static.test.mjs
+# このGitHub ActionsにCloudflareデプロイ認証情報を渡さない。
+# Rulesetのrequired checkとCloudflare preview/production保護は別途設定する。
+name: Utsuroi Secure Static CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secure-gate:
+    name: secure-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout full history for secrets scan
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Check static-site script and references
+        run: node scripts/verify-static.mjs .
+
+      - name: Test checker with intentional failures
+        run: node --test scripts/verify-static.test.mjs
+
+      - name: Check vendored JavaScript parse
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d vendor ]]; then
+            find vendor -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+          fi
+
+      - name: Setup Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.25'
+
+      - name: Install pinned Gitleaks
+        run: go install github.com/gitleaks/gitleaks/v8@v8.30.1
+
+      - name: Scan Git history for secrets
+        run: "$(go env GOPATH)/bin/gitleaks git --redact --no-banner ."
+
+# 未実装：vendoredライブラリの既知脆弱性(SCA)、SAST、実機E2E、アクセス制御の否定テスト。
+# これらは公開区分と対象技術に応じて別ジョブで必須化し、人間が根拠を確認する。

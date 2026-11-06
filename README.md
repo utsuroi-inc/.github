@@ -1,56 +1,50 @@
-# 株式会社うつろい GitHub運用ガイド
+# 株式会社うつろい — AI開発の安全な公開フロー
 
-このリポジトリは、株式会社うつろいのGitHub全体に共通する「取扱説明書」です。
+この提案は、既存の[`utsuroi-inc/.github`](https://github.com/utsuroi-inc/.github)の共通GitHub運用を拡張するものです。
 
-目的は、難しいルールを増やすことではありません。会社の成果物を安全に保管し、変更の理由を後からたどれ、誰でも同じ手順で改善できる状態をつくることです。
+目的は、**チェックに合格し、人が特定バージョンを承認したアプリだけを公開し、実利用へ進める**ことです。
 
-## まず読むもの
+## まず読む順番
 
-1. [GitHub運用方針](GOVERNANCE.md) — なぜこの運用をするのか、全体像
-2. [変更の進め方](CONTRIBUTING.md) — 実際の作業手順
-3. [セキュリティ上の問題を見つけたとき](SECURITY.md) — 公開Issueへ書いてはいけない内容
-4. [AI開発支援ツール向けルール](AGENTS.md) — CodexやClaude Codeが作業前に読む注意事項
+1. [`SECURE_DEVELOPMENT.md`](SECURE_DEVELOPMENT.md) — 社内の開発標準と責任分担
+2. [`RELEASE_GATES.md`](RELEASE_GATES.md) — 検査・公開の条件と緊急停止
+3. [`ROLLOUT_PLAN.md`](ROLLOUT_PLAN.md) — 既存アプリを止めずに段階導入する計画
+4. [`OPERATION_PLAYBOOK.md`](OPERATION_PLAYBOOK.md) — 誰が何を確認し、いつ公開・停止するかの実際の運用
 
-## 一言でいうと
+## 配布テンプレート
+
+| ファイル | 用途 |
+| --- | --- |
+| `templates/APP_REGISTER.csv` | 公開・運用するアプリの社内台帳（実データをこの公開Repoに記録しない） |
+| `templates/RELEASE_RECORD.md` | 公開するSHAと検査・承認の証跡 |
+| `templates/SECURITY_TEST_MATRIX.md` | 認証・認可・公開範囲等のテスト |
+| `templates/AGENTS_SECURITY.md` | CodexとClaude Codeへ共通の規則を渡す |
+| `templates/workflows/secure-node-ci.yml` | Node.js用GitHub Actionsの出発点 |
+| `templates/workflows/secure-static-ci.yml` | HTML＋素のJavaScript用の静的サイト検査。PRで必須化して使う |
+| `templates/static-app/verify-static.mjs` | 静的ファイル、JS構文、外部JS、危険API等の最小チェック |
+| `templates/static-app/verify-static.test.mjs` | 上記チェッカーの失敗テスト |
+| `templates/DEPLOYMENT_INVENTORY.md` | Cloudflareの本番・プレビュー・API・代替デプロイ経路を非公開で棚卸し |
+
+## 重要な注意
+
+- 本文・テンプレートがGitHubへ入るだけでは**リリース制限は有効になりません**。
+- 各アプリでGitHub Ruleset、CIの必須チェック、Cloudflareのデプロイ・Access設定が必要です。
+- 人が承認するまで、既存本番アプリ・アカウントの権限・公開範囲を変えません。
+- 本提案は全社標準案であり、実際の保護は1件のパイロットで遮断試験をしてから導入します。
+- 静的サイト用の簡易チェッカーは**SAST・既知脆弱性分析・実機テストの代わりではありません**。別途追加が必要です。
+
+## 運用フロー
 
 ```mermaid
-flowchart LR
-    A[やりたいこと・困りごと] --> B[Issue<br/>作業メモ]
-    B --> C[作業用ブランチ]
-    C --> D[Pull Request<br/>変更の確認]
-    D --> E[自動検査]
-    E --> F[main<br/>正式版]
+flowchart TD
+  A[アプリ登録とリスク分類] --> B[設計・開発]
+  B --> C[PRと自動検査]
+  C -->|不合格| B
+  C -->|合格| D[独立レビュー]
+  D -->|差戻し| B
+  D -->|合格| E[リリース承認]
+  E -->|対象SHAのみ| F[本番公開・実動作確認]
+  F --> G[運用・月次点検]
 ```
 
-- 会社の仕事は `utsuroi-inc` に置く
-- `main` は正式版として扱い、直接変更しない
-- 変更はPull Requestにして、目的と確認結果を残す
-- 社内情報・顧客情報・秘密情報は公開リポジトリへ置かない
-
-## AIにルールを伝える仕組み
-
-```mermaid
-flowchart LR
-    HUMAN[人がルールを更新] --> AGENTS[AGENTS.md]
-    AGENTS --> CODEX[Codex]
-    AGENTS --> CLAUDE[CLAUDE.md経由で<br/>Claude Code]
-    CODEX --> PR[同じ手順でPR]
-    CLAUDE --> PR
-```
-
-Organization共通の考え方はこのリポジトリ、製品固有のコマンドや禁止事項は
-各リポジトリ直下の `AGENTS.md` に置きます。`CLAUDE.md` は `AGENTS.md` を読み込む
-短い入口にし、同じルールを二重管理しません。
-
-Organizationの公開プロフィールは [`profile/README.md`](profile/README.md) で管理しています。
-
-
-## AI開発の公開・実利用ゲート（提案中）
-
-AIや人が制作したアプリを本番公開・実利用する際は、チェックに合格した特定のコミットSHAだけを承認します。
-
-1. [開発標準](SECURE_DEVELOPMENT.md)
-2. [公開ゲートと合格条件](RELEASE_GATES.md)
-3. [導入・遮断テスト計画](ROLLOUT_PLAN.md)
-
-**注意:** 文書を追加するだけでは公開が技術的にブロックされません。各アプリへCI・Ruleset・Cloudflareの公開制御を導入し、失敗時に実際に遮断されることを確認してから適用します。
+`main`を更新できることと、**本番に公開してよいこと**は区別します。全社標準としては、各アプリの公開先がどのブランチ・アクションで動くかを必ず確認してください。
