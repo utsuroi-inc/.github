@@ -1,0 +1,67 @@
+# TEMPLATE: リポジトリごとのNode.js Webアプリへコピーして使用。
+# 注意: このファイルを置いただけでは本番デプロイは遮断されない。
+# GitHub Rulesetで job `secure-gate` を必須にし、失敗時のマージ不可を実測する。
+# Node.jsのlint/typecheck/test/buildスクリプトは各package.jsonに必須。
+name: Utsuroi Secure CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  secure-gate:
+    name: secure-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout all Git history for secret scanning
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit/integration tests (must exit without watch)
+        env:
+          CI: 'true'
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Known-vulnerability audit
+        run: npm audit --audit-level=high
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.25'
+
+      - name: Install pinned Gitleaks
+        run: go install github.com/gitleaks/gitleaks/v8@v8.30.1
+
+      - name: Scan Git history for secrets
+        run: "$(go env GOPATH)/bin/gitleaks git --redact --no-banner ."
+
+# 導入時にCodeQLまたはSemgrep OSS等のSASTを追加・必須化する。
+# 権限・業務ロジックの否定テストも各アプリのnpm testに必ず含める。
+# このワークフローは検査専用で、Cloudflareへのデプロイ権限を持たない。
